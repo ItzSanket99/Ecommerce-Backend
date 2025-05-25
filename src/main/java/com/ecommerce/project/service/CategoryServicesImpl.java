@@ -9,6 +9,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.nio.file.ReadOnlyFileSystemException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CategoryServicesImpl implements CategoryService {
@@ -34,5 +35,21 @@ public class CategoryServicesImpl implements CategoryService {
 
         categories.remove(category);
         return "Category with categoryId: "+ categoryId +" Deleted Successfully";
+    }
+
+    @Override
+    public Category updateCategory(Category category, Long categoryId) {
+        Optional<Category> optionalCategory  = categories.stream()
+                .filter(category1 -> category1.getCategoryId().equals(categoryId))
+                .findFirst();
+
+        if(optionalCategory.isPresent()){
+            Category existingCategory = optionalCategory.get();
+            existingCategory.setCategoryName(category.getCategoryName());
+            return existingCategory;
+        }else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Category Not Found");
+        }
+
     }
 }
