@@ -32,9 +32,9 @@ public class Order {
     private Double totalAmount;
     private String orderStatus;
 
-//    @OneToOne
-//    @JoinColumn(name = "payment_id")
-//    private Payment payment;
+    @OneToOne
+    @JoinColumn(name = "payment_id")
+    private Payment payment;
 
     @ManyToOne
     @JoinColumn(name = "address_id")
