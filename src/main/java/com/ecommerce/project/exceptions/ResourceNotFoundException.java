@@ -13,7 +13,7 @@ public class ResourceNotFoundException extends RuntimeException{
         this.filedId = filedId;
     }
 
-    public ResourceNotFoundException(String filedName, String resourceName, String filed, Long filedId) {
+    public ResourceNotFoundException(String filedName, String resourceName, String filed) {
         super(String.format("%s not found with %s: %s",resourceName,filed,filedName));
         this.filedName = filedName;
         this.resourceName = resourceName;
@@ -23,4 +23,6 @@ public class ResourceNotFoundException extends RuntimeException{
     public ResourceNotFoundException(){
 
     }
+
+
 }
