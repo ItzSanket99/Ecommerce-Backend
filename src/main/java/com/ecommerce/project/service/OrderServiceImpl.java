@@ -5,6 +5,8 @@ import com.ecommerce.project.exceptions.ResourceNotFoundException;
 import com.ecommerce.project.model.*;
 import com.ecommerce.project.payload.OrderDTO;
 import com.ecommerce.project.payload.OrderItemDTO;
+import com.ecommerce.project.payload.PaymentDTO;
+import com.ecommerce.project.payload.ProductDTO;
 import com.ecommerce.project.repositories.*;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
@@ -16,67 +18,64 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class OrderServiceImpl implements OrderService{
+public class OrderServiceImpl implements OrderService {
 
     @Autowired
-    private CartRepository cartRepository;
+    CartRepository cartRepository;
 
     @Autowired
-    private AddressRepository addressRepository;
+    AddressRepository addressRepository;
 
     @Autowired
-    private PaymentRepository paymentRepository;
+    OrderItemRepository orderItemRepository;
 
     @Autowired
-    private OrderRepository orderRepository;
+    OrderRepository orderRepository;
 
     @Autowired
-    private OrderItemRepository orderItemRepository;
+    PaymentRepository paymentRepository;
 
     @Autowired
-    private ProductRepository productRepository;
+    CartService cartService;
 
     @Autowired
-    private CartService cartService;
+    ModelMapper modelMapper;
 
     @Autowired
-    private ModelMapper modelMapper;
+    ProductRepository productRepository;
 
     @Override
     @Transactional
     public OrderDTO placeOrder(String emailId, Long addressId, String paymentMethod, String pgName, String pgPaymentId, String pgStatus, String pgResponseMessage) {
-        // Getting User Cart.
         Cart cart = cartRepository.findCartByEmail(emailId);
-        if(cart == null){
-            throw new ResourceNotFoundException("cart","email",emailId);
+        if (cart == null) {
+            throw new ResourceNotFoundException("Cart", "email", emailId);
         }
 
         Address address = addressRepository.findById(addressId)
-                .orElseThrow(()-> new ResourceNotFoundException("address","addressId",addressId));
+                .orElseThrow(() -> new ResourceNotFoundException("Address", "addressId", addressId));
 
-
-        // Create a new Order with Payment info.
         Order order = new Order();
         order.setEmail(emailId);
         order.setDate(LocalDate.now());
         order.setTotalAmount(cart.getTotalPrice());
-        order.setOrderStatus("Order Accepted!");
+        order.setOrderStatus("Order Accepted !");
         order.setAddress(address);
 
-        Payment payment = new Payment(paymentMethod,pgPaymentId, pgStatus, pgResponseMessage,pgName);
+        Payment payment = new Payment(paymentMethod, pgPaymentId, pgStatus, pgResponseMessage, pgName);
         payment.setOrder(order);
         payment = paymentRepository.save(payment);
         order.setPayment(payment);
+
         Order savedOrder = orderRepository.save(order);
 
-        // Get Item from the cart into order items.
         List<CartItems> cartItems = cart.getCartItems();
-        if(cartItems.isEmpty()){
-            throw new ApiException("cart is empty");
+        if (cartItems.isEmpty()) {
+            throw new ApiException("Cart is empty");
         }
 
         List<OrderItems> orderItems = new ArrayList<>();
-        for(CartItems cartItem : cartItems){
+        for (CartItems cartItem : cartItems) {
             OrderItems orderItem = new OrderItems();
             orderItem.setProduct(cartItem.getProduct());
             orderItem.setQuantity(cartItem.getQuantity());
@@ -88,22 +87,33 @@ public class OrderServiceImpl implements OrderService{
 
         orderItems = orderItemRepository.saveAll(orderItems);
 
-        // update product stock.
+        // Update product stock and clear cart
         cart.getCartItems().forEach(item -> {
             int quantity = item.getQuantity();
             Product product = item.getProduct();
+
             product.setQuantity(product.getQuantity() - quantity);
             productRepository.save(product);
 
-            // clear the cart.
-            cartService.deleteProductFromCart(cart.getCartId(),product.getProductId());
+            cartService.deleteProductFromCart(cart.getCartId(), item.getProduct().getProductId());
         });
 
-        // send back the order summary.
-        OrderDTO orderDTO = modelMapper.map(savedOrder,OrderDTO.class);
-        orderItems.forEach(item ->
-                orderDTO.getOrderItems().add(modelMapper.map(item, OrderItemDTO.class)));
+        // Start mapping to DTOs
+        OrderDTO orderDTO = modelMapper.map(savedOrder, OrderDTO.class);
+
+        // Map paymentDTO explicitly
+        orderDTO.setPaymentDTO(modelMapper.map(savedOrder.getPayment(), PaymentDTO.class));
+
+        // Map orderItems and include productDTO in each
+        for (OrderItems item : orderItems) {
+            OrderItemDTO orderItemDTO = modelMapper.map(item, OrderItemDTO.class);
+            orderItemDTO.setProductDTO(modelMapper.map(item.getProduct(), ProductDTO.class));
+            orderDTO.getOrderItems().add(orderItemDTO);
+        }
+
         orderDTO.setAddressId(addressId);
+
         return orderDTO;
     }
+
 }
