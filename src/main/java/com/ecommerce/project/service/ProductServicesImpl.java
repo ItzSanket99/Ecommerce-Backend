@@ -48,12 +48,15 @@ public class ProductServicesImpl implements ProductService{
     @Autowired
     private CartService cartService;
 
+    @Value("${image.base.url}")
+    private String imageBaseUrl;
+
     @Override
     public ProductDTO addProduct(ProductDTO productDTO,Long categoryId){
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(()-> new ResourceNotFoundException("Category","categoryId",categoryId));
 
-        Product product = modelMapper.map(productDTO,Product.class);
+
 
         boolean isProductIsNotPresent = true;
         List<Product> products = category.getProducts();
@@ -65,6 +68,7 @@ public class ProductServicesImpl implements ProductService{
             }
         }
         if(isProductIsNotPresent) {
+            Product product = modelMapper.map(productDTO, Product.class);
             product.setImage("default.png");
             product.setCategory(category);
             double specialPrice = product.getPrice() - ((product.getDiscount() * 0.01) * product.getPrice());
@@ -87,7 +91,12 @@ public class ProductServicesImpl implements ProductService{
 
         List<Product> products = productPage.getContent();
         List<ProductDTO> productDTOS = products.stream()
-                .map(product -> modelMapper.map(product,ProductDTO.class))
+                .map(product ->
+                {
+                    ProductDTO productDTO = modelMapper.map(product,ProductDTO.class);
+                    productDTO.setImage(constructImageUrl(product.getImage()));
+                    return productDTO;
+                })
                 .toList();
 
 
@@ -100,6 +109,12 @@ public class ProductServicesImpl implements ProductService{
         productResponse.setTotalPages(productPage.getTotalPages());
         productResponse.setLastPage(productPage.isLast());
         return productResponse;
+    }
+
+    private String constructImageUrl(String imageName){
+
+        return imageBaseUrl.endsWith("/") ? imageBaseUrl + imageName :
+                imageBaseUrl + "/" + imageName;
     }
 
     @Override
