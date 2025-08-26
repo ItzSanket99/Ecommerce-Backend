@@ -21,5 +21,5 @@ public interface ProductService {
 
     ProductDTO updateProductImage(Long productId, MultipartFile image) throws IOException;
 
-    ProductResponse getAllProduct(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+    ProductResponse getAllProduct(String keyword, String category, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 }
