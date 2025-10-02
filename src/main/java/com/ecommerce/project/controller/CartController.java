@@ -2,6 +2,7 @@ package com.ecommerce.project.controller;
 
 import com.ecommerce.project.model.Cart;
 import com.ecommerce.project.payload.CartDTO;
+import com.ecommerce.project.payload.CartItemDTO;
 import com.ecommerce.project.repositories.CartRepository;
 import com.ecommerce.project.service.CartService;
 import com.ecommerce.project.util.AuthUtils;
@@ -25,6 +26,12 @@ public class CartController {
     @Autowired
     private CartService cartService;
 
+    @PostMapping("/cart/create")
+    public ResponseEntity<String> createOrUpdateCart(@RequestBody List<CartItemDTO> cartItems){
+        String Response = cartService.createOrUpdateCartWithItems(cartItems);
+        return new ResponseEntity<>(Response,HttpStatus.CREATED);
+    }
+
     @PostMapping("/cart/product/{productId}/quantity/{quantity}")
     public ResponseEntity<CartDTO> addProductToCart(
             @PathVariable Long productId,
@@ -40,7 +47,7 @@ public class CartController {
         return new ResponseEntity<List<CartDTO>>(cartDTOS,HttpStatus.FOUND);
     }
 
-    @GetMapping("/carts/users/cart")
+        @GetMapping("/carts/users/cart")
     public ResponseEntity<CartDTO> getCartById(){
         String emailId = authUtils.loggedInEmail();
         Cart cart = cartRepository.findCartByEmail(emailId);
