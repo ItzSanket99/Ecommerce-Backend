@@ -1,10 +1,8 @@
 package com.ecommerce.project.controller;
 
 import com.ecommerce.project.config.AppConstants;
-import com.ecommerce.project.payload.OrderDTO;
-import com.ecommerce.project.payload.OrderRequestDTO;
-import com.ecommerce.project.payload.OrderResponse;
-import com.ecommerce.project.payload.StripePaymentDTO;
+import com.ecommerce.project.payload.*;
+import com.ecommerce.project.security.services.UserDetailsImpl;
 import com.ecommerce.project.service.OrderService;
 import com.ecommerce.project.service.StripeService;
 import com.ecommerce.project.util.AuthUtils;
@@ -13,6 +11,7 @@ import com.stripe.model.PaymentIntent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -62,5 +61,15 @@ public class OrderController {
     ){
         OrderResponse orderResponse = orderService.getAllOrder(pageNumber,pageSize,sortBy,sortOrder);
         return new ResponseEntity<OrderResponse>(orderResponse,HttpStatus.OK);
+    }
+
+    @PutMapping("/admin/orders/{orderId}/status")
+    public ResponseEntity<OrderDTO> updateOrderStatus(
+            @PathVariable Long orderId,
+            @RequestBody OrderStatusUpdateDto orderStatusUpdateDto
+
+    ){
+        OrderDTO order = orderService.updateOrder(orderId,orderStatusUpdateDto.getStatus());
+        return new ResponseEntity<OrderDTO>(order,HttpStatus.OK);
     }
 }
