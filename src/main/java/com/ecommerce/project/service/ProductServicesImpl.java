@@ -11,6 +11,7 @@ import com.ecommerce.project.payload.ProductResponse;
 import com.ecommerce.project.repositories.CartRepository;
 import com.ecommerce.project.repositories.CategoryRepository;
 import com.ecommerce.project.repositories.ProductRepository;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -243,14 +244,15 @@ public class ProductServicesImpl implements ProductService{
 
     @Override
     public ProductDTO deleteProduct(Long productId) {
-        Product deletedProduct = productRepository.findById(productId)
-                .orElseThrow(()-> new ResourceNotFoundException("product","productId",productId));
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
 
+        // DELETE
         List<Cart> carts = cartRepository.findCartsByProductId(productId);
-        carts.forEach(cart -> cartService.deleteProductFromCart(cart.getCartId(),productId));
+        carts.forEach(cart -> cartService.deleteProductFromCart(cart.getCartId(), productId));
 
-        productRepository.delete(deletedProduct);
-        return modelMapper.map(deletedProduct,ProductDTO.class);
+        productRepository.delete(product);
+        return modelMapper.map(product, ProductDTO.class);
     }
 
     @Override
