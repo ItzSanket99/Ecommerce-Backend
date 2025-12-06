@@ -11,6 +11,7 @@ import com.ecommerce.project.payload.ProductResponse;
 import com.ecommerce.project.repositories.CartRepository;
 import com.ecommerce.project.repositories.CategoryRepository;
 import com.ecommerce.project.repositories.ProductRepository;
+import com.ecommerce.project.util.AuthUtils;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +51,9 @@ public class ProductServicesImpl implements ProductService{
     @Autowired
     private CartService cartService;
 
+    @Autowired
+    private AuthUtils authUtils;
+
     @Value("${image.base.url}")
     private String imageBaseUrl;
 
@@ -57,8 +61,6 @@ public class ProductServicesImpl implements ProductService{
     public ProductDTO addProduct(ProductDTO productDTO,Long categoryId){
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(()-> new ResourceNotFoundException("Category","categoryId",categoryId));
-
-
 
         boolean isProductIsNotPresent = true;
         List<Product> products = category.getProducts();
@@ -73,6 +75,7 @@ public class ProductServicesImpl implements ProductService{
             Product product = modelMapper.map(productDTO, Product.class);
             product.setImage("default.png");
             product.setCategory(category);
+            product.setUser(authUtils.loggedInUser());
             double specialPrice = product.getPrice() - ((product.getDiscount() * 0.01) * product.getPrice());
             product.setSpecialPrice(specialPrice);
             Product savedProduct = productRepository.save(product);
