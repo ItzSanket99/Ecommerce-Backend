@@ -53,7 +53,6 @@ public class AuthController {
 
     @GetMapping("/user")
     public ResponseEntity<?> getUserDetails(Authentication authentication){
-
         return ResponseEntity.ok().body(authService.getCurrentUserDetails(authentication));
     }
 
@@ -73,6 +72,11 @@ public class AuthController {
         Sort sortByAndOrder = Sort.by(AppConstants.SORT_USER_BY).descending();
         Pageable pageDetails = PageRequest.of(pageNumber,Integer.parseInt(AppConstants.PAGE_SIZE),sortByAndOrder);
         return ResponseEntity.ok(authService.getAllSellers(pageDetails));
+    }
+
+    @PostMapping("/register/sellers")
+    public ResponseEntity<?> registerSellers(@Valid @RequestBody SignupRequest signupRequest) {
+        return authService.registerSeller(signupRequest);
     }
 
 }

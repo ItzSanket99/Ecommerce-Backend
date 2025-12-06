@@ -159,4 +159,52 @@ public class AuthServiceImpl implements AuthService{
         userResponse.setLastPage(allUser.isLast());
         return userResponse;
     }
+
+    @Override
+    public ResponseEntity<MessageResponse> registerSeller(SignupRequest signupRequest) {
+        if (userRepository.existsByUserName((signupRequest.getUsername()))) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: username is already taken!"));
+
+        }
+        if (userRepository.existsByEmail(signupRequest.getEmail())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already taken!"));
+
+        }
+        User user = new User(
+                signupRequest.getEmail(),
+                signupRequest.getUsername(),
+                encoder.encode(signupRequest.getPassword())
+        );
+        Set<String> StrRoles = signupRequest.getRole();
+        Set<Role> roles = new HashSet<>();
+        if (StrRoles == null) {
+            Role userRole = roleRepository.findByRoleName(AppRoles.ROLE_SELLER)
+                    .orElseThrow(() -> new RuntimeException("Error: Role is not Found"));
+            roles.add(userRole);
+        } else {
+            StrRoles.forEach(role -> {
+                switch (role) {
+                    case "admin":
+                        Role adminRole = roleRepository.findByRoleName(AppRoles.ROLE_ADMIN)
+                                .orElseThrow(() -> new RuntimeException("Error: Role is not Found"));
+                        roles.add(adminRole);
+                        break;
+                    case "seller":
+                        Role sellerRole = roleRepository.findByRoleName(AppRoles.ROLE_SELLER)
+                                .orElseThrow(() -> new RuntimeException("Error: Role is not Found"));
+                        roles.add(sellerRole);
+                        break;
+                    default:
+                        Role userRole = roleRepository.findByRoleName(AppRoles.ROLE_USER)
+                                .orElseThrow(() -> new RuntimeException("Error: Role is not Found"));
+                        roles.add(userRole);
+                        break;
+                }
+
+            });
+        }
+        user.setRoles(roles);
+        userRepository.save(user);
+        return ResponseEntity.ok(new MessageResponse("Seller register successfully!"));
+    }
 }

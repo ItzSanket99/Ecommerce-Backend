@@ -6,6 +6,7 @@ import com.ecommerce.project.security.request.LoginRequest;
 import com.ecommerce.project.security.request.SignupRequest;
 import com.ecommerce.project.security.response.MessageResponse;
 import com.ecommerce.project.security.response.UserInfoResponse;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -21,4 +22,6 @@ public interface AuthService {
     ResponseCookie logoutUser();
 
     UserResponse getAllSellers(Pageable pageDetails);
+
+    ResponseEntity<MessageResponse> registerSeller(SignupRequest signupRequest);
 }
