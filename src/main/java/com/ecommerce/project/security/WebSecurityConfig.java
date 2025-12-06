@@ -89,6 +89,7 @@ public class WebSecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ✅ enable CORS
                 .csrf(csrf -> csrf.disable())
+                .cors(cors -> {})
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->

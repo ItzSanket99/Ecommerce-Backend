@@ -24,4 +24,6 @@ public interface ProductService {
     ProductResponse getAllProduct(String keyword, String category, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
     ProductResponse getAllProductsForAdmin(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+
+    ProductResponse getAllProductsForSeller(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 }

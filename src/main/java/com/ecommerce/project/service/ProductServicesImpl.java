@@ -5,6 +5,7 @@ import com.ecommerce.project.exceptions.ResourceNotFoundException;
 import com.ecommerce.project.model.Cart;
 import com.ecommerce.project.model.Category;
 import com.ecommerce.project.model.Product;
+import com.ecommerce.project.model.User;
 import com.ecommerce.project.payload.CartDTO;
 import com.ecommerce.project.payload.ProductDTO;
 import com.ecommerce.project.payload.ProductResponse;
@@ -137,6 +138,38 @@ public class ProductServicesImpl implements ProductService{
 
         Page<Product> productPage = productRepository.findAll(pageDetails);
         List<Product> products = productPage.getContent();
+        List<ProductDTO> productDTOS = products.stream()
+                .map(product ->
+                {
+                    ProductDTO productDTO = modelMapper.map(product,ProductDTO.class);
+                    productDTO.setImage(constructImageUrl(product.getImage()));
+                    return productDTO;
+                })
+                .toList();
+
+        ProductResponse productResponse = new ProductResponse();
+        productResponse.setContent(productDTOS);
+        productResponse.setPageNumber(productPage.getNumber());
+        productResponse.setPageSize(productPage.getSize());
+        productResponse.setPageSize(productPage.getSize());
+        productResponse.setTotalElements(productPage.getTotalElements());
+        productResponse.setTotalPages(productPage.getTotalPages());
+        productResponse.setLastPage(productPage.isLast());
+        return productResponse;
+    }
+
+    @Override
+    public ProductResponse getAllProductsForSeller(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+        Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageDetails = PageRequest.of(pageNumber,pageSize,sortByAndOrder);
+
+        User loginUser = authUtils.loggedInUser();
+        Page<Product> productPage = productRepository.findByUser(loginUser,pageDetails);
+        List<Product> products = productPage.getContent();
+
         List<ProductDTO> productDTOS = products.stream()
                 .map(product ->
                 {
