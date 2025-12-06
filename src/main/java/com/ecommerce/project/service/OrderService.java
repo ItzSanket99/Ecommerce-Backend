@@ -13,4 +13,6 @@ public interface OrderService {
     OrderResponse getAllOrder(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
     OrderDTO updateOrder(Long orderId, String status);
+
+    OrderResponse getAllSellerOrder(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 }

@@ -5,6 +5,7 @@ import com.ecommerce.project.exceptions.ResourceNotFoundException;
 import com.ecommerce.project.model.*;
 import com.ecommerce.project.payload.*;
 import com.ecommerce.project.repositories.*;
+import com.ecommerce.project.util.AuthUtils;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     ProductRepository productRepository;
+
+    @Autowired
+    AuthUtils authUtils;
 
     @Override
     @Transactional
@@ -149,6 +153,45 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderStatus(status);
         orderRepository.save(order);
         return modelMapper.map(order,OrderDTO.class);
+    }
+
+    @Override
+    public OrderResponse getAllSellerOrder(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+        Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        User seller = authUtils.loggedInUser();
+
+        Pageable pageDetails = PageRequest.of(pageNumber,pageSize,sortByAndOrder);
+
+        Page<Order> pageOrder = orderRepository.findAll(pageDetails);
+
+        List<Order> sellerOrders = pageOrder.getContent().stream()
+                .filter(order -> order.getOrderItems().stream()
+                        .anyMatch(orderItems -> {
+                            var product = orderItems.getProduct();
+                            if (product == null || product.getUser() == null) {
+                                return false;
+                            }
+                            return orderItems.getProduct()
+                                    .getUser().getUserId().equals(seller.getUserId());
+                        }))
+                .toList();
+
+        List<OrderDTO> orderDTOS = sellerOrders.stream()
+                .map(order -> modelMapper.map(order, OrderDTO.class))
+                .toList();
+
+        OrderResponse orderResponse = new OrderResponse();
+        orderResponse.setContent(orderDTOS);
+        orderResponse.setPageNumber(pageOrder.getNumber());
+        orderResponse.setPageSize(pageOrder.getSize());
+        orderResponse.setTotalElement(pageOrder.getTotalElements());
+        orderResponse.setTotalPages(pageOrder.getTotalPages());
+        orderResponse.setLastPage(pageOrder.isLast());
+
+        return orderResponse;
     }
 
 }
