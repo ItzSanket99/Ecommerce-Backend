@@ -26,6 +26,10 @@ It follows clean coding practices, layered architecture, and production-ready co
 - PostgreSQL 
 - Maven
 
+## 📡 Deployment
+Deployed using [Render](https://render.com/)
+Dockerized container is live and integrated with Netlify frontend
+
 ## 📂 Folder Structure
 
 ```
